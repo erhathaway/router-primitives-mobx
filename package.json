@@ -1,0 +1,34 @@
+{
+  "name": "recursive-router-mobx",
+  "version": "0.0.1",
+  "description": "Mobx bindings for recursive router",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.es.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "rm -rf dist &&rollup -c",
+    "watch": "rollup -cw"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/erhathaway/recursive-router-mobx.git"
+  },
+  "author": "Ethan Hathaway",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/erhathaway/recursive-router-mobx/issues"
+  },
+  "homepage": "https://github.com/erhathaway/recursive-router-mobx#readme",
+  "dependencies": {
+    "recursive-router": "../recursive-router"
+  },
+  "devDependencies": {
+    "mobx": "^5.9.0",
+    "rollup": "^1.2.3",
+    "rollup-plugin-typescript2": "^0.19.2",
+    "typescript": "^3.3.3333"
+  }
+}
