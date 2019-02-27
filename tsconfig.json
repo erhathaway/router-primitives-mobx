@@ -6,6 +6,6 @@
     "module": "es6",
     "noImplicitAny": true,
     "outDir": "./dist",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
   },
 }
