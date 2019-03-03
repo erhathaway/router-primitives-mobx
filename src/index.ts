@@ -1,13 +1,10 @@
-import { Manager, Router } from 'recursive-router';
-// import { IRouterInitParams, RouterT } from 'recursive-router';
- 
+import { Manager, Types } from 'recursive-router';
 import { decorate, observable } from 'mobx';
 
 class MobxManager extends Manager {
-
   // remove getState and subscribe 
-  public createNewRouterInitArgs({ name, config, type, parentName}: { [key: string]: any }): any {
-    const parent = (this as Manager).routers[parentName];
+  public createNewRouterInitArgs({ name, config, type, parentName}: Types.IRouterInitParams): Types.IRouterInitArgs {
+    const parent = this.routers[parentName];
 
     return {
       name,
@@ -16,13 +13,13 @@ class MobxManager extends Manager {
       parent,
       routers: {},
       manager: this,
-      root: (this as Manager).rootRouter,
+      root: this.rootRouter,
     };
   }
 
-  public createRouterFromInitArgs(initalArgs: ReturnType<Manager['createNewRouterInitArgs']>): any {
-    const routerClass = (this as Manager).routerTypes[initalArgs.type];
-    const mobxRouter = new (routerClass as any)(initalArgs);
+  public createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs) {
+    const routerClass = this.routerTypes[initalArgs.type];
+    const mobxRouter = (new (routerClass as any)(initalArgs) as Types.IRouter);
 
     decorate(mobxRouter, {
       state: observable,
@@ -30,24 +27,23 @@ class MobxManager extends Manager {
     });
 
     if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
-      mobxRouter.state = { visible: ((this as Manager).config || {}).defaultShow };
+      (mobxRouter as any).state = { visible: (mobxRouter.config || {}).defaultShow };
     } else if (mobxRouter.isRootRouter) {
-      mobxRouter.state = { visible: true };
+      (mobxRouter as any).state = { visible: true };
     } else {
-      mobxRouter.state = {};
+      (mobxRouter as any).state = {};
     }
 
-    mobxRouter.history = [];
+    (mobxRouter as any).history = [];
 
     return mobxRouter;
   }
 
   // location -> newState
-  // newState -> routerStates :specify
-  public setNewRouterState(location: any) {
-    const newState = (this).calcNewRouterState(location, (this as Manager).rootRouter);
-    const routers = (this as Manager).routers as { [key: string]: any }
-    Object.values(routers).forEach((r: any): any => {
+  public setNewRouterState(location: Types.IInputLocation) {
+    const newState = this.calcNewRouterState(location, this.rootRouter);
+    const routers = this.routers
+    Object.values(routers).forEach((r) => {
       const routerSpecificState = newState[r.name];
 
       // only update state if it is defined for this router
@@ -55,19 +51,13 @@ class MobxManager extends Manager {
         let newHistory = [{...r.state}, ...r.history].filter(s => s !== undefined && s.visible !== undefined)
         if (newHistory.length > 5) { newHistory = newHistory.slice(0, 5); }
   
-        r.state = routerSpecificState;
-        r.history = newHistory;
+        (r as any).state = routerSpecificState;
+        (r as any).history = newHistory;
       }
     });
   }
 }
 
-
-class MobxRouter extends Manager {
-
-}
-
 export { 
   MobxManager, 
-  MobxRouter 
 };
