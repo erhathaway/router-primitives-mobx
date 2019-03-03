@@ -52,7 +52,7 @@ class MobxManager extends Manager {
 
       // only update state if it is defined for this router
       if (routerSpecificState !== undefined) {
-        let newHistory = [r.state, ...r.history].filter(s => s !== undefined)
+        let newHistory = [{...r.state}, ...r.history].filter(s => s !== undefined && s.visible !== undefined)
         if (newHistory.length > 5) { newHistory = newHistory.slice(0, 5); }
   
         r.state = routerSpecificState;
