@@ -17,9 +17,9 @@ class MobxManager extends Manager {
     };
   }
 
-  public createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs) {
+  public createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs, routerActionNames: string[]) {
     const routerClass = this.routerTypes[initalArgs.type];
-    const mobxRouter = (new (routerClass as any)(initalArgs) as Types.IRouter);
+    const mobxRouter = (new (routerClass as any)({ ...initalArgs, actions: routerActionNames }) as Types.IRouter);
 
     decorate(mobxRouter, {
       state: observable,

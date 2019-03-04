@@ -60,9 +60,9 @@ var MobxManager = /** @class */ (function (_super) {
             root: this.rootRouter,
         };
     };
-    MobxManager.prototype.createRouterFromInitArgs = function (initalArgs) {
+    MobxManager.prototype.createRouterFromInitArgs = function (initalArgs, routerActionNames) {
         var routerClass = this.routerTypes[initalArgs.type];
-        var mobxRouter = new routerClass(initalArgs);
+        var mobxRouter = new routerClass(__assign({}, initalArgs, { actions: routerActionNames }));
         decorate(mobxRouter, {
             state: observable,
             history: observable,
