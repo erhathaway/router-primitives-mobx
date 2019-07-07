@@ -2,7 +2,7 @@
 
 Object.defineProperty(exports, '__esModule', { value: true });
 
-var recursiveRouter = require('recursive-router');
+var routerPrimitives = require('router-primitives');
 var mobx = require('mobx');
 
 /*! *****************************************************************************
@@ -45,6 +45,10 @@ var __assign = function() {
     return __assign.apply(this, arguments);
 };
 
+/**
+ * Extends the manager and changes how routers are instantialized.
+ * Overrides router instantiation to turn routers in Mobx observables.
+ */
 var MobxManager = /** @class */ (function (_super) {
     __extends(MobxManager, _super);
     function MobxManager() {
@@ -72,7 +76,8 @@ var MobxManager = /** @class */ (function (_super) {
             history: mobx.observable,
         });
         if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
-            mobxRouter.state = { visible: (mobxRouter.config || {}).defaultShow };
+            var defaultAction = (mobxRouter.config || {}).defaultAction || [];
+            mobxRouter.state = { visible: defaultAction.includes('show') };
         }
         else if (mobxRouter.isRootRouter) {
             mobxRouter.state = { visible: true };
@@ -101,6 +106,6 @@ var MobxManager = /** @class */ (function (_super) {
         });
     };
     return MobxManager;
-}(recursiveRouter.Manager));
+}(routerPrimitives.Manager));
 
 exports.MobxManager = MobxManager;
