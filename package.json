@@ -1,7 +1,7 @@
 {
-  "name": "recursive-router-mobx",
+  "name": "router-primitives-mobx",
   "version": "0.0.1",
-  "description": "Mobx bindings for recursive router",
+  "description": "Mobx bindings for Router Primitives",
   "main": "dist/index.cjs.js",
   "module": "dist/index.es.js",
   "types": "dist/index.d.ts",
@@ -15,23 +15,23 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/erhathaway/recursive-router-mobx.git"
+    "url": "git+https://github.com/erhathaway/router-primitives-mobx.git"
   },
   "author": "Ethan Hathaway",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/erhathaway/recursive-router-mobx/issues"
+    "url": "https://github.com/erhathaway/router-primitives-mobx/issues"
   },
-  "homepage": "https://github.com/erhathaway/recursive-router-mobx#readme",
+  "homepage": "https://github.com/erhathaway/router-primitives-mobx#readme",
   "peerDependencies": {
-    "recursive-router": "../recursive-router",
+    "router-primitives": "../router-primitives",
     "mobx": "^5.9.0"
   },
   "devDependencies": {
     "@types/jest": "^24.0.9",
     "jest": "^24.1.0",
     "mobx": "^5.9.0",
-    "recursive-router": "../recursive-router",
+    "router-primitives": "../router-primitives",
     "rollup": "^1.2.3",
     "rollup-plugin-typescript2": "^0.19.2",
     "ts-jest": "^24.0.0",

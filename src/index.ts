@@ -1,6 +1,10 @@
-import { Manager, Types } from 'recursive-router';
+import { Manager, Types } from 'router-primitives';
 import { decorate, observable } from 'mobx';
 
+/**
+ * Extends the manager and changes how routers are instantialized.
+ * Overrides router instantiation to turn routers in Mobx observables.
+ */
 class MobxManager extends Manager {
   // remove getState and subscribe 
   public createNewRouterInitArgs({ name, config, type, parentName}: Types.IRouterInitParams): Types.IRouterInitArgs {
@@ -27,7 +31,8 @@ class MobxManager extends Manager {
     });
 
     if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
-      (mobxRouter as any).state = { visible: (mobxRouter.config || {}).defaultShow };
+      const defaultAction = (mobxRouter.config || {}).defaultAction || [];
+      (mobxRouter as any).state = { visible: defaultAction.includes('show') };
     } else if (mobxRouter.isRootRouter) {
       (mobxRouter as any).state = { visible: true };
     } else {
