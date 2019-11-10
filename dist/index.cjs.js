@@ -46,7 +46,7 @@ var __assign = function() {
 };
 
 /**
- * Extends the manager and changes how routers are instantialized.
+ * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 var MobxManager = /** @class */ (function (_super) {
@@ -58,25 +58,27 @@ var MobxManager = /** @class */ (function (_super) {
     MobxManager.prototype.createNewRouterInitArgs = function (_a) {
         var name = _a.name, config = _a.config, type = _a.type, parentName = _a.parentName;
         var parent = this.routers[parentName];
+        var actions = Object.keys(this.templates[type].actions);
         return {
             name: name,
             config: __assign({}, config),
-            type: type || 'scene',
+            type: type,
             parent: parent,
             routers: {},
             manager: this,
             root: this.rootRouter,
+            actions: actions
         };
     };
-    MobxManager.prototype.createRouterFromInitArgs = function (initalArgs, routerActionNames) {
+    MobxManager.prototype.createRouterFromInitArgs = function (initalArgs) {
         var routerClass = this.routerTypes[initalArgs.type];
-        var mobxRouter = new routerClass(__assign({}, initalArgs, { actions: routerActionNames }));
+        var mobxRouter = new routerClass(__assign({}, initalArgs));
         mobx.decorate(mobxRouter, {
             state: mobx.observable,
             history: mobx.observable,
         });
         if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
-            var defaultAction = (mobxRouter.config || {}).defaultAction || [];
+            var defaultAction = (mobxRouter.config).defaultAction || [];
             mobxRouter.state = { visible: defaultAction.includes('show') };
         }
         else if (mobxRouter.isRootRouter) {
@@ -88,19 +90,30 @@ var MobxManager = /** @class */ (function (_super) {
         mobxRouter.history = [];
         return mobxRouter;
     };
-    // location -> newState
+    /**
+     * Given a location change, set the new router state tree state
+     * AKA:new location -> new state
+     *
+     * The method `calcNewRouterState` will recursively walk down the tree calling each
+     * routers reducer to calculate the state
+     *
+     * This library avoids setting router state in a central state store.
+     * Instead, state is set on each router.
+     * Here we map over each state and set it on its respective router
+     */
     MobxManager.prototype.setNewRouterState = function (location) {
         var newState = this.calcNewRouterState(location, this.rootRouter);
         var routers = this.routers;
         Object.values(routers).forEach(function (r) {
             var routerSpecificState = newState[r.name];
-            // only update state if it is defined for this router
+            // Only update state if it is defined for this router
+            // TODO remove the history length limitation and use config option
             if (routerSpecificState !== undefined) {
                 var newHistory = [__assign({}, r.state)].concat(r.history).filter(function (s) { return s !== undefined && s.visible !== undefined; });
                 if (newHistory.length > 5) {
                     newHistory = newHistory.slice(0, 5);
                 }
-                r.state = routerSpecificState;
+                r.state = __assign({}, routerSpecificState, r._EXPERIMENTAL_internal_state);
                 r.history = newHistory;
             }
         });
