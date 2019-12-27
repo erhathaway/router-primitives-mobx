@@ -1,5 +1,5 @@
-import { Manager } from 'router-primitives';
-import { decorate, observable } from 'mobx';
+import { Router, Manager } from 'router-primitives';
+import { decorate, observable, computed, runInAction, set } from 'mobx';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -41,16 +41,62 @@ var __assign = function() {
     return __assign.apply(this, arguments);
 };
 
+decorate(Router, {
+    parent: observable,
+    routers: observable,
+    root: observable,
+    config: observable,
+    isPathRouter: computed,
+    isRootRouter: computed,
+    pathLocation: computed,
+    siblings: computed,
+    routeKey: computed,
+    lastDefinedParentsDisableChildCacheState: computed
+});
+var MobxRouter = /** @class */ (function (_super) {
+    __extends(MobxRouter, _super);
+    function MobxRouter(init) {
+        var _this = _super.call(this, init) || this;
+        _this.__state = observable.object({});
+        _this.__history = observable.array([]);
+        return _this;
+    }
+    Object.defineProperty(MobxRouter.prototype, "state", {
+        get: function () {
+            return this.__state;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(MobxRouter.prototype, "history", {
+        get: function () {
+            return this.__history;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    return MobxRouter;
+}(Router));
+decorate(MobxRouter, {
+    __state: observable,
+    state: computed,
+    __history: observable,
+    history: computed
+    // _EXPERIMENTAL_internal_state: observable
+});
 /**
  * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 var MobxManager = /** @class */ (function (_super) {
     __extends(MobxManager, _super);
-    function MobxManager() {
-        return _super !== null && _super.apply(this, arguments) || this;
+    function MobxManager(init) {
+        var _this = this;
+        var router = MobxRouter;
+        _this = _super.call(this, __assign({}, init, { router: router })) || this;
+        return _this;
     }
-    // remove getState and subscribe 
+    // remove getState and subscribe
     MobxManager.prototype.createNewRouterInitArgs = function (_a) {
         var name = _a.name, config = _a.config, type = _a.type, parentName = _a.parentName;
         var parent = this.routers[parentName];
@@ -69,21 +115,26 @@ var MobxManager = /** @class */ (function (_super) {
     MobxManager.prototype.createRouterFromInitArgs = function (initalArgs) {
         var routerClass = this.routerTypes[initalArgs.type];
         var mobxRouter = new routerClass(__assign({}, initalArgs));
-        decorate(mobxRouter, {
-            state: observable,
-            history: observable,
+        runInAction(function () {
+            // check if parent is visible
+            if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
+                var defaultAction = mobxRouter.config.defaultAction || [];
+                set(mobxRouter.__state, {
+                    visible: defaultAction.includes("show")
+                });
+                // check if root router
+            }
+            else if (mobxRouter.isRootRouter) {
+                set(mobxRouter.__state, {
+                    visible: true
+                });
+            }
+            else {
+                set(mobxRouter.__state, {
+                    visible: false
+                });
+            }
         });
-        if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
-            var defaultAction = (mobxRouter.config).defaultAction || [];
-            mobxRouter.state = { visible: defaultAction.includes('show') };
-        }
-        else if (mobxRouter.isRootRouter) {
-            mobxRouter.state = { visible: true };
-        }
-        else {
-            mobxRouter.state = {};
-        }
-        mobxRouter.history = [];
         return mobxRouter;
     };
     /**
@@ -105,12 +156,14 @@ var MobxManager = /** @class */ (function (_super) {
             // Only update state if it is defined for this router
             // TODO remove the history length limitation and use config option
             if (routerSpecificState !== undefined) {
-                var newHistory = [__assign({}, r.state)].concat(r.history).filter(function (s) { return s !== undefined && s.visible !== undefined; });
-                if (newHistory.length > 5) {
-                    newHistory = newHistory.slice(0, 5);
+                var newHistory_1 = [__assign({}, r.state)].concat(r.history).filter(function (s) { return s !== undefined && s.visible !== undefined; });
+                if (newHistory_1.length > 5) {
+                    newHistory_1 = newHistory_1.slice(0, 5);
                 }
-                r.state = __assign({}, routerSpecificState, r._EXPERIMENTAL_internal_state);
-                r.history = newHistory;
+                runInAction(function () {
+                    set(r.__state, __assign({}, routerSpecificState, r._EXPERIMENTAL_internal_state));
+                    set(r.__history, newHistory_1);
+                });
             }
         });
     };

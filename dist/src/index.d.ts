@@ -1,9 +1,10 @@
-import { Manager, Types } from 'router-primitives';
+import { Manager, Types, IManagerInit } from "router-primitives";
 /**
  * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 declare class MobxManager extends Manager {
+    constructor(init: IManagerInit);
     createNewRouterInitArgs({ name, config, type, parentName }: Types.IRouterCreationInfo): Types.IRouterInitArgs;
     createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs): Types.IRouter;
     /**
@@ -19,4 +20,4 @@ declare class MobxManager extends Manager {
      */
     setNewRouterState(location: Types.IInputLocation): void;
 }
-export { MobxManager, };
+export { MobxManager };
