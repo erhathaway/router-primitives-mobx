@@ -1,12 +1,15 @@
 {
   "compilerOptions": {
+    "baseUrl": "./src/",
     "declaration": true,
     "declarationDir": "./dist",
-    "target": "es5",
-    "module": "es6",
+    "target": "ESNext",
+    "module": "ES2015",
     "noImplicitAny": true,
     "outDir": "./dist",
     "moduleResolution": "node",
-    "lib": ["es2017"]
+    "lib": ["ES2015", "ES2016", "ES2017", "ESNext"]
   },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
 }
