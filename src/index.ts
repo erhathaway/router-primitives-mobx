@@ -13,6 +13,7 @@ import {
   IRouterCurrentState,
   RouterHistoryState
 } from "router-primitives/dist/types";
+import { IInternalState } from "router-primitives/dist/router/base";
 
 decorate(Router, {
   parent: observable,
@@ -24,23 +25,37 @@ decorate(Router, {
   pathLocation: computed,
   siblings: computed,
   routeKey: computed,
+  // state: computed,
   lastDefinedParentsDisableChildCacheState: computed
+  // _EXPERIMENTAL_internal_state: observable
 });
 
 class MobxRouter extends Router {
   public __state = observable.object<IRouterCurrentState>({});
   public __history = observable.array<IRouterCurrentState>([]);
+  public __EXPERIMENTAL_internal_state = observable.object<IInternalState>({});
 
   constructor(init: IRouterInitArgs) {
     super(init);
   }
 
   get state() {
+    // return observable({
     return this.__state;
+    // ...this.__EXPERIMENTAL_internal_state
+    // });
   }
 
   get history() {
     return this.__history;
+  }
+
+  public EXPERIMENTAL_setInternalState(internalState: IInternalState) {
+    set(this.__EXPERIMENTAL_internal_state, { ...internalState });
+  }
+
+  get EXPERIMENTAL_internal_state(): IInternalState {
+    return this.__EXPERIMENTAL_internal_state;
   }
 }
 
@@ -48,8 +63,14 @@ decorate(MobxRouter, {
   __state: observable,
   state: computed,
   __history: observable,
-  history: computed
-  // _EXPERIMENTAL_internal_state: observable
+  history: computed,
+  __EXPERIMENTAL_internal_state: observable,
+  EXPERIMENTAL_internal_state: computed
+});
+
+decorate(Manager, {
+  rootRouter: observable
+  // routers: observable
 });
 
 /**
@@ -57,9 +78,18 @@ decorate(MobxRouter, {
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 class MobxManager extends Manager {
+  public __routers = observable<{ [routerName: string]: IRouter | any }>({});
+
   constructor(init: IManagerInit) {
-    const router = MobxRouter;
-    super({ ...init, router });
+    // const router = MobxRouter;
+    super({}, false);
+    const initArgs = { ...init, router: MobxRouter };
+    // runInAction(() => {
+    //   set(this.__routers, {});
+    // });
+    this.initializeManager(initArgs);
+    // this.__routers = observable<{ [routerName: string]: IRouter }>({});
+    // this.__routers = {};
   }
   // remove getState and subscribe
   public createNewRouterInitArgs({
@@ -82,6 +112,22 @@ class MobxManager extends Manager {
       root: this.rootRouter,
       actions
     };
+  }
+
+  protected registerRouter(name: string, router: IRouter) {
+    runInAction(() => {
+      extendObservable(this.__routers, { [name]: router });
+    });
+  }
+
+  protected unregisterRouter(name: string) {
+    // runInAction(() => {
+    //   delete this.__routers[name];
+    // });
+  }
+
+  get routers() {
+    return this.__routers;
   }
 
   public createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs) {
@@ -142,8 +188,8 @@ class MobxManager extends Manager {
         }
         runInAction(() => {
           set(((r as unknown) as MobxRouter).__state, {
-            ...routerSpecificState,
-            ...r._EXPERIMENTAL_internal_state
+            ...routerSpecificState
+            // ...r.EXPERIMENTAL_internal_state
           });
           set(((r as unknown) as MobxRouter).__history, newHistory);
         });
@@ -151,5 +197,10 @@ class MobxManager extends Manager {
     });
   }
 }
+
+decorate(MobxManager, {
+  __routers: observable,
+  routers: computed
+});
 
 export { MobxManager };

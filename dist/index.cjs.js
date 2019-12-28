@@ -55,7 +55,9 @@ mobx.decorate(routerPrimitives.Router, {
     pathLocation: mobx.computed,
     siblings: mobx.computed,
     routeKey: mobx.computed,
+    // state: computed,
     lastDefinedParentsDisableChildCacheState: mobx.computed
+    // _EXPERIMENTAL_internal_state: observable
 });
 var MobxRouter = /** @class */ (function (_super) {
     __extends(MobxRouter, _super);
@@ -63,11 +65,15 @@ var MobxRouter = /** @class */ (function (_super) {
         var _this = _super.call(this, init) || this;
         _this.__state = mobx.observable.object({});
         _this.__history = mobx.observable.array([]);
+        _this.__EXPERIMENTAL_internal_state = mobx.observable.object({});
         return _this;
     }
     Object.defineProperty(MobxRouter.prototype, "state", {
         get: function () {
+            // return observable({
             return this.__state;
+            // ...this.__EXPERIMENTAL_internal_state
+            // });
         },
         enumerable: true,
         configurable: true
@@ -79,14 +85,29 @@ var MobxRouter = /** @class */ (function (_super) {
         enumerable: true,
         configurable: true
     });
+    MobxRouter.prototype.EXPERIMENTAL_setInternalState = function (internalState) {
+        mobx.set(this.__EXPERIMENTAL_internal_state, __assign({}, internalState));
+    };
+    Object.defineProperty(MobxRouter.prototype, "EXPERIMENTAL_internal_state", {
+        get: function () {
+            return this.__EXPERIMENTAL_internal_state;
+        },
+        enumerable: true,
+        configurable: true
+    });
     return MobxRouter;
 }(routerPrimitives.Router));
 mobx.decorate(MobxRouter, {
     __state: mobx.observable,
     state: mobx.computed,
     __history: mobx.observable,
-    history: mobx.computed
-    // _EXPERIMENTAL_internal_state: observable
+    history: mobx.computed,
+    __EXPERIMENTAL_internal_state: mobx.observable,
+    EXPERIMENTAL_internal_state: mobx.computed
+});
+mobx.decorate(routerPrimitives.Manager, {
+    rootRouter: mobx.observable
+    // routers: observable
 });
 /**
  * Extends the manager and changes how routers are initialized.
@@ -95,10 +116,18 @@ mobx.decorate(MobxRouter, {
 var MobxManager = /** @class */ (function (_super) {
     __extends(MobxManager, _super);
     function MobxManager(init) {
-        var _this = this;
-        var router = MobxRouter;
-        _this = _super.call(this, __assign({}, init, { router: router })) || this;
+        var _this = 
+        // const router = MobxRouter;
+        _super.call(this, {}, false) || this;
+        _this.__routers = mobx.observable({});
+        var initArgs = __assign({}, init, { router: MobxRouter });
+        // runInAction(() => {
+        //   set(this.__routers, {});
+        // });
+        _this.initializeManager(initArgs);
         return _this;
+        // this.__routers = observable<{ [routerName: string]: IRouter }>({});
+        // this.__routers = {};
     }
     // remove getState and subscribe
     MobxManager.prototype.createNewRouterInitArgs = function (_a) {
@@ -116,6 +145,25 @@ var MobxManager = /** @class */ (function (_super) {
             actions: actions
         };
     };
+    MobxManager.prototype.registerRouter = function (name, router) {
+        var _this = this;
+        mobx.runInAction(function () {
+            var _a;
+            mobx.extendObservable(_this.__routers, (_a = {}, _a[name] = router, _a));
+        });
+    };
+    MobxManager.prototype.unregisterRouter = function (name) {
+        // runInAction(() => {
+        //   delete this.__routers[name];
+        // });
+    };
+    Object.defineProperty(MobxManager.prototype, "routers", {
+        get: function () {
+            return this.__routers;
+        },
+        enumerable: true,
+        configurable: true
+    });
     MobxManager.prototype.createRouterFromInitArgs = function (initalArgs) {
         var routerClass = this.routerTypes[initalArgs.type];
         var mobxRouter = new routerClass(__assign({}, initalArgs));
@@ -165,7 +213,9 @@ var MobxManager = /** @class */ (function (_super) {
                     newHistory_1 = newHistory_1.slice(0, 5);
                 }
                 mobx.runInAction(function () {
-                    mobx.set(r.__state, __assign({}, routerSpecificState, r._EXPERIMENTAL_internal_state));
+                    mobx.set(r.__state, __assign({}, routerSpecificState
+                    // ...r.EXPERIMENTAL_internal_state
+                    ));
                     mobx.set(r.__history, newHistory_1);
                 });
             }
@@ -173,5 +223,9 @@ var MobxManager = /** @class */ (function (_super) {
     };
     return MobxManager;
 }(routerPrimitives.Manager));
+mobx.decorate(MobxManager, {
+    __routers: mobx.observable,
+    routers: mobx.computed
+});
 
 exports.MobxManager = MobxManager;

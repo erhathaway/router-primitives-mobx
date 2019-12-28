@@ -1,11 +1,20 @@
 import { Manager, Types, IManagerInit } from "router-primitives";
+import { IRouter } from "router-primitives/dist/types";
 /**
  * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 declare class MobxManager extends Manager {
+    __routers: {
+        [routerName: string]: any;
+    } & import("mobx").IObservableObject;
     constructor(init: IManagerInit);
     createNewRouterInitArgs({ name, config, type, parentName }: Types.IRouterCreationInfo): Types.IRouterInitArgs;
+    protected registerRouter(name: string, router: IRouter): void;
+    protected unregisterRouter(name: string): void;
+    readonly routers: {
+        [routerName: string]: any;
+    } & import("mobx").IObservableObject;
     createRouterFromInitArgs(initalArgs: Types.IRouterInitArgs): Types.IRouter;
     /**
      * Given a location change, set the new router state tree state
