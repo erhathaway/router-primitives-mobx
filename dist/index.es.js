@@ -1,5 +1,5 @@
-import { Router, Manager } from 'router-primitives';
-import { decorate, observable, computed, runInAction, set, extendObservable } from 'mobx';
+import { RouterCache, Router, Manager } from 'router-primitives';
+import { decorate, observable, computed, action, runInAction, set, extendObservable } from 'mobx';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -41,6 +41,19 @@ var __assign = function() {
     return __assign.apply(this, arguments);
 };
 
+decorate(RouterCache, {
+    _cacheStore: observable,
+    wasVisible: computed,
+    removeCache: action,
+    setWasPreviouslyVisibleToFromLocation: action,
+    setWasPreviouslyVisibleTo: action
+});
+// class MobxRouterCache extends RouterCache {
+//   public __cacheStore: boolean | undefined = undefined;
+//   constructor() {
+//     super();
+//   }
+// }
 decorate(Router, {
     parent: observable,
     routers: observable,
@@ -51,6 +64,7 @@ decorate(Router, {
     pathLocation: computed,
     siblings: computed,
     routeKey: computed,
+    serialize: action,
     // state: computed,
     lastDefinedParentsDisableChildCacheState: computed
     // _EXPERIMENTAL_internal_state: observable
@@ -102,11 +116,20 @@ decorate(MobxRouter, {
     history: computed,
     __EXPERIMENTAL_internal_state: observable,
     EXPERIMENTAL_internal_state: computed
+    // show: action,
+    // hide: action
 });
-// decorate(Manager, {
-// rootRouter: observable
-// routers: observable
-// });
+decorate(Manager, {
+    // rootRouter: observable
+    // routers: observable
+    calcNewRouterState: action,
+    setCacheAndHide: action,
+    setChildrenDefaults: action,
+    createActionWrapperFunction: action
+});
+var actionFnDecorator = function (fn) {
+    return action(fn);
+};
 /**
  * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
@@ -116,7 +139,7 @@ var MobxManager = /** @class */ (function (_super) {
     function MobxManager(init) {
         var _this = 
         // const router = MobxRouter;
-        _super.call(this, {}, false) || this;
+        _super.call(this, {}, { shouldInitialize: false, actionFnDecorator: actionFnDecorator }) || this;
         _this.__routers = observable.object({});
         var initArgs = __assign({}, init, { router: MobxRouter });
         runInAction(function () {
@@ -223,7 +246,8 @@ var MobxManager = /** @class */ (function (_super) {
 }(Manager));
 decorate(MobxManager, {
     // __routers: observable,
-    routers: computed
+    routers: computed,
+    setNewRouterState: action
 });
 
 export { MobxManager };
