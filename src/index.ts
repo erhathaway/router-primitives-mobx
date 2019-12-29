@@ -42,8 +42,7 @@ class MobxRouter extends Router {
   get state() {
     // return observable({
     return this.__state;
-    // ...this.__EXPERIMENTAL_internal_state
-    // });
+    // return { ...this.__state, ...this.EXPERIMENTAL_internal_state };
   }
 
   get history() {
@@ -51,11 +50,13 @@ class MobxRouter extends Router {
   }
 
   public EXPERIMENTAL_setInternalState(internalState: IInternalState) {
-    set(this.__EXPERIMENTAL_internal_state, { ...internalState });
+    runInAction(() => {
+      set(this.__EXPERIMENTAL_internal_state, { ...internalState });
+    });
   }
 
   get EXPERIMENTAL_internal_state(): IInternalState {
-    return this.__EXPERIMENTAL_internal_state;
+    return this.__EXPERIMENTAL_internal_state || {};
   }
 }
 
@@ -68,25 +69,27 @@ decorate(MobxRouter, {
   EXPERIMENTAL_internal_state: computed
 });
 
-decorate(Manager, {
-  rootRouter: observable
-  // routers: observable
-});
+// decorate(Manager, {
+// rootRouter: observable
+// routers: observable
+// });
 
 /**
  * Extends the manager and changes how routers are initialized.
  * Overrides router instantiation to turn routers in Mobx observables.
  */
 class MobxManager extends Manager {
-  public __routers = observable<{ [routerName: string]: IRouter | any }>({});
+  public __routers = observable.object<{ [routerName: string]: IRouter | any }>(
+    {}
+  );
 
   constructor(init: IManagerInit) {
     // const router = MobxRouter;
     super({}, false);
     const initArgs = { ...init, router: MobxRouter };
-    // runInAction(() => {
-    //   set(this.__routers, {});
-    // });
+    runInAction(() => {
+      this.__routers = observable.object({});
+    });
     this.initializeManager(initArgs);
     // this.__routers = observable<{ [routerName: string]: IRouter }>({});
     // this.__routers = {};
@@ -127,6 +130,7 @@ class MobxManager extends Manager {
   }
 
   get routers() {
+    console.log("getting routers");
     return this.__routers;
   }
 
@@ -187,9 +191,10 @@ class MobxManager extends Manager {
           newHistory = newHistory.slice(0, 5);
         }
         runInAction(() => {
+          // console.log("setting new router state", r.name, routerSpecificState);
           set(((r as unknown) as MobxRouter).__state, {
-            ...routerSpecificState
-            // ...r.EXPERIMENTAL_internal_state
+            ...routerSpecificState,
+            ...r.EXPERIMENTAL_internal_state
           });
           set(((r as unknown) as MobxRouter).__history, newHistory);
         });
@@ -199,7 +204,7 @@ class MobxManager extends Manager {
 }
 
 decorate(MobxManager, {
-  __routers: observable,
+  // __routers: observable,
   routers: computed
 });
 
