@@ -10,8 +10,9 @@
   ],
   "scripts": {
     "test": "jest --watch",
-    "build": "rm -rf dist &&rollup -c",
-    "watch": "rollup -cw"
+    "clean": "rimraf coverage build tmp",
+    "build": "npm run clean && && rollup -c",
+    "build:watch": "npm run clean && rollup -cw"
   },
   "repository": {
     "type": "git",
@@ -28,15 +29,16 @@
     "mobx": "^5.9.0"
   },
   "devDependencies": {
-    "@types/jest": "^24.0.9",
-    "jest": "^24.1.0",
-    "mobx": "^5.9.0",
-    "rollup": "^1.2.3",
+    "@types/jest": "^24.9.1",
+    "jest": "^24.9.0",
+    "mobx": "^5.15.4",
+    "rimraf": "^3.0.2",
+    "rollup": "^1.31.1",
     "rollup-plugin-typescript2": "^0.19.2",
     "router-primitives": "file:../router-primitives",
-    "ts-jest": "^24.0.0",
-    "tslint": "^5.13.0",
+    "ts-jest": "^24.3.0",
+    "tslint": "^5.20.1",
     "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.3.3333"
+    "typescript": "~3.7.2"
   }
 }

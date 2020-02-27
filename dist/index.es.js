@@ -122,10 +122,10 @@ decorate(MobxRouter, {
 decorate(Manager, {
     // rootRouter: observable
     // routers: observable
-    calcNewRouterState: action,
-    setCacheAndHide: action,
-    setChildrenDefaults: action,
-    createActionWrapperFunction: action
+    calcNewRouterState: action
+    // setCacheAndHide: action
+    // setChildrenDefaults: action
+    // createActionWrapperFunction: action
 });
 var actionFnDecorator = function (fn) {
     return action(fn);
@@ -141,13 +141,13 @@ var MobxManager = /** @class */ (function (_super) {
         // const router = MobxRouter;
         _super.call(this, {}, { shouldInitialize: false, actionFnDecorator: actionFnDecorator }) || this;
         _this.__routers = observable.object({});
-        var initArgs = __assign({}, init, { router: MobxRouter });
+        var initArgs = __assign(__assign({}, init), { router: MobxRouter });
         runInAction(function () {
             _this.__routers = observable.object({});
         });
         _this.initializeManager(initArgs);
         return _this;
-        // this.__routers = observable<{ [routerName: string]: IRouter }>({});
+        // this.__routers = observable<{ [routerName: string]: RouterInstance }>({});
         // this.__routers = {};
     }
     // remove getState and subscribe
@@ -163,7 +163,8 @@ var MobxManager = /** @class */ (function (_super) {
             routers: {},
             manager: this,
             root: this.rootRouter,
-            actions: actions
+            actions: actions,
+            cache: this.routerCacheClass // eslint-disable-line
         };
     };
     MobxManager.prototype.registerRouter = function (name, router) {
@@ -230,13 +231,15 @@ var MobxManager = /** @class */ (function (_super) {
             // Only update state if it is defined for this router
             // TODO remove the history length limitation and use config option
             if (routerSpecificState !== undefined) {
-                var newHistory_1 = [__assign({}, r.state)].concat(r.history).filter(function (s) { return s !== undefined && s.visible !== undefined; });
+                var newHistory_1 = [__assign({}, r.state)]
+                    .concat(r.history)
+                    .filter(function (s) { return s !== undefined && s.visible !== undefined; });
                 if (newHistory_1.length > 5) {
                     newHistory_1 = newHistory_1.slice(0, 5);
                 }
                 runInAction(function () {
                     // console.log("setting new router state", r.name, routerSpecificState);
-                    set(r.__state, __assign({}, routerSpecificState, r.EXPERIMENTAL_internal_state));
+                    set(r.__state, __assign(__assign({}, routerSpecificState), r.EXPERIMENTAL_internal_state));
                     set(r.__history, newHistory_1);
                 });
             }
