@@ -1,5 +1,5 @@
 import { RouterCache, Router, Manager } from 'router-primitives';
-import { decorate, observable, computed, action, runInAction, set, extendObservable } from 'mobx';
+import { decorate, observable, action, computed, runInAction, set, extendObservable } from 'mobx';
 
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -42,11 +42,14 @@ var __assign = function() {
 };
 
 decorate(RouterCache, {
-    _cacheStore: observable,
-    wasVisible: computed,
+    cache: observable,
+    transactionCache: observable,
+    startTransaction: action,
+    saveTransaction: action,
+    discardTransaction: action,
     removeCache: action,
-    setWasPreviouslyVisibleToFromLocation: action,
-    setWasPreviouslyVisibleTo: action
+    setCache: action,
+    setCacheFromSerialized: action
 });
 // class MobxRouterCache extends RouterCache {
 //   public __cacheStore: boolean | undefined = undefined;
@@ -163,8 +166,8 @@ var MobxManager = /** @class */ (function (_super) {
             routers: {},
             manager: this,
             root: this.rootRouter,
-            actions: actions,
-            cache: this.routerCacheClass // eslint-disable-line
+            actions: actions
+            // cache: this.routerCache as any // eslint-disable-line
         };
     };
     MobxManager.prototype.registerRouter = function (name, router) {
@@ -181,7 +184,7 @@ var MobxManager = /** @class */ (function (_super) {
     };
     Object.defineProperty(MobxManager.prototype, "routers", {
         get: function () {
-            console.log("getting routers");
+            // console.log("getting routers");
             return this.__routers;
         },
         enumerable: true,
@@ -224,6 +227,7 @@ var MobxManager = /** @class */ (function (_super) {
      * Here we map over each state and set it on its respective router
      */
     MobxManager.prototype.setNewRouterState = function (location) {
+        this.setCacheFromLocation(location);
         var newState = this.calcNewRouterState(location, this.rootRouter);
         var routers = this.routers;
         Object.values(routers).forEach(function (r) {
@@ -250,6 +254,7 @@ var MobxManager = /** @class */ (function (_super) {
 decorate(MobxManager, {
     // __routers: observable,
     routers: computed,
+    setCacheFromLocation: action,
     setNewRouterState: action
 });
 

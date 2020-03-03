@@ -27,11 +27,14 @@ import {
 } from "mobx";
 
 decorate(RouterCache, {
-  _cacheStore: observable,
-  wasVisible: computed,
+  cache: observable,
+  transactionCache: observable,
+  startTransaction: action,
+  saveTransaction: action,
+  discardTransaction: action,
   removeCache: action,
-  setWasPreviouslyVisibleToFromLocation: action,
-  setWasPreviouslyVisibleTo: action
+  setCache: action,
+  setCacheFromSerialized: action
 });
 
 // class MobxRouterCache extends RouterCache {
@@ -181,8 +184,8 @@ class MobxManager<
       routers: {},
       manager: this as any,
       root: this.rootRouter,
-      actions: actions as any,
-      cache: this.routerCacheClass as any // eslint-disable-line
+      actions: actions as any
+      // cache: this.routerCache as any // eslint-disable-line
     } as any;
   }
 
@@ -202,7 +205,7 @@ class MobxManager<
   }
 
   get routers(): Record<string, RouterInstance<AllTemplates<CustomTemplates>>> {
-    console.log("getting routers");
+    // console.log("getting routers");
     return this.__routers as any;
   }
 
@@ -258,6 +261,8 @@ class MobxManager<
    * Here we map over each state and set it on its respective router
    */
   public setNewRouterState(location: IInputLocation): void {
+    this.setCacheFromLocation(location);
+
     const newState = this.calcNewRouterState(location, this.rootRouter as any);
     const routers = this.routers;
 
@@ -289,6 +294,7 @@ class MobxManager<
 decorate(MobxManager, {
   // __routers: observable,
   routers: computed,
+  setCacheFromLocation: action,
   setNewRouterState: action
 });
 

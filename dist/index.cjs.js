@@ -46,11 +46,14 @@ var __assign = function() {
 };
 
 mobx.decorate(routerPrimitives.RouterCache, {
-    _cacheStore: mobx.observable,
-    wasVisible: mobx.computed,
+    cache: mobx.observable,
+    transactionCache: mobx.observable,
+    startTransaction: mobx.action,
+    saveTransaction: mobx.action,
+    discardTransaction: mobx.action,
     removeCache: mobx.action,
-    setWasPreviouslyVisibleToFromLocation: mobx.action,
-    setWasPreviouslyVisibleTo: mobx.action
+    setCache: mobx.action,
+    setCacheFromSerialized: mobx.action
 });
 // class MobxRouterCache extends RouterCache {
 //   public __cacheStore: boolean | undefined = undefined;
@@ -167,8 +170,8 @@ var MobxManager = /** @class */ (function (_super) {
             routers: {},
             manager: this,
             root: this.rootRouter,
-            actions: actions,
-            cache: this.routerCacheClass // eslint-disable-line
+            actions: actions
+            // cache: this.routerCache as any // eslint-disable-line
         };
     };
     MobxManager.prototype.registerRouter = function (name, router) {
@@ -185,7 +188,7 @@ var MobxManager = /** @class */ (function (_super) {
     };
     Object.defineProperty(MobxManager.prototype, "routers", {
         get: function () {
-            console.log("getting routers");
+            // console.log("getting routers");
             return this.__routers;
         },
         enumerable: true,
@@ -228,6 +231,7 @@ var MobxManager = /** @class */ (function (_super) {
      * Here we map over each state and set it on its respective router
      */
     MobxManager.prototype.setNewRouterState = function (location) {
+        this.setCacheFromLocation(location);
         var newState = this.calcNewRouterState(location, this.rootRouter);
         var routers = this.routers;
         Object.values(routers).forEach(function (r) {
@@ -254,6 +258,7 @@ var MobxManager = /** @class */ (function (_super) {
 mobx.decorate(MobxManager, {
     // __routers: observable,
     routers: mobx.computed,
+    setCacheFromLocation: mobx.action,
     setNewRouterState: mobx.action
 });
 
