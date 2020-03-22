@@ -11,7 +11,7 @@
   "scripts": {
     "test": "jest --watch",
     "clean": "rimraf coverage build tmp",
-    "build": "npm run clean && && rollup -c",
+    "build": "npm run clean && rollup -c",
     "build:watch": "npm run clean && rollup -cw"
   },
   "repository": {

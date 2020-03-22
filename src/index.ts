@@ -205,7 +205,6 @@ class MobxManager<
   }
 
   get routers(): Record<string, RouterInstance<AllTemplates<CustomTemplates>>> {
-    // console.log("getting routers");
     return this.__routers as any;
   }
 
@@ -262,7 +261,12 @@ class MobxManager<
    */
   public setNewRouterState(location: IInputLocation): void {
     this.setCacheFromLocation(location);
-
+    if (
+      this.removeCacheAfterRehydration &&
+      location.search[this.cacheKey] !== undefined
+    ) {
+      return this.removeCacheFromLocation(location);
+    }
     const newState = this.calcNewRouterState(location, this.rootRouter as any);
     const routers = this.routers;
 
@@ -279,7 +283,6 @@ class MobxManager<
           newHistory = newHistory.slice(0, 5);
         }
         runInAction(() => {
-          // console.log("setting new router state", r.name, routerSpecificState);
           set(((r as unknown) as any).__state, {
             ...routerSpecificState,
             ...r.EXPERIMENTAL_internal_state

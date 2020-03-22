@@ -231,7 +231,12 @@ var MobxManager = /** @class */ (function (_super) {
      * Here we map over each state and set it on its respective router
      */
     MobxManager.prototype.setNewRouterState = function (location) {
+        console.log("existing location search", location.search);
         this.setCacheFromLocation(location);
+        if (this.removeCacheAfterRehydration &&
+            location.search[this.cacheKey] !== undefined) {
+            return this.removeCacheFromLocation(location);
+        }
         var newState = this.calcNewRouterState(location, this.rootRouter);
         var routers = this.routers;
         Object.values(routers).forEach(function (r) {
