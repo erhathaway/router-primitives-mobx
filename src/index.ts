@@ -14,7 +14,7 @@ import {
   IRouterCreationInfo,
   IManager,
   Router,
-  IInternalState
+  IInternalState,
 } from "router-primitives";
 import {
   decorate,
@@ -23,7 +23,7 @@ import {
   extendObservable,
   set,
   computed,
-  action
+  action,
 } from "mobx";
 
 decorate(RouterCache, {
@@ -34,7 +34,7 @@ decorate(RouterCache, {
   discardTransaction: action,
   removeCache: action,
   setCache: action,
-  setCacheFromSerialized: action
+  setCacheFromSerialized: action,
 });
 
 // class MobxRouterCache extends RouterCache {
@@ -56,7 +56,7 @@ decorate(Router, {
   routeKey: computed,
   serialize: action,
   // state: computed,
-  lastDefinedParentsDisableChildCacheState: computed
+  lastDefinedParentsDisableChildCacheState: computed,
   // _EXPERIMENTAL_internal_state: observable
 });
 
@@ -65,11 +65,10 @@ class MobxRouter<
   RouterTypeName extends NarrowRouterTypeName<keyof Templates>,
   InitArgs extends IRouterInitArgs<
     Templates,
-    RouterTypeName,
-    IManager
-  > = IRouterInitArgs<Templates, RouterTypeName, IManager>
-> extends Router<Templates, RouterTypeName, InitArgs> {
-  public __state = observable.object<RouterCurrentState>({});
+    NarrowRouterTypeName<RouterTypeName>
+  > = IRouterInitArgs<Templates, NarrowRouterTypeName<RouterTypeName>>
+> extends Router<Templates, NarrowRouterTypeName<RouterTypeName>, InitArgs> {
+  public __state = observable.object<RouterCurrentState>({ visible: false });
   public __history = observable.array<RouterCurrentState>([]);
   public __EXPERIMENTAL_internal_state = observable.object<IInternalState>({});
 
@@ -104,7 +103,7 @@ decorate(MobxRouter, {
   __history: observable,
   history: computed,
   __EXPERIMENTAL_internal_state: observable,
-  EXPERIMENTAL_internal_state: computed
+  EXPERIMENTAL_internal_state: computed,
   // show: action,
   // hide: action
 });
@@ -112,7 +111,7 @@ decorate(MobxRouter, {
 decorate(Manager, {
   // rootRouter: observable
   // routers: observable
-  calcNewRouterState: action
+  calcNewRouterState: action,
 
   // setCacheAndHide: action
   // setChildrenDefaults: action
@@ -130,10 +129,7 @@ class MobxManager<
   CustomTemplates extends IRouterTemplates = {}
 > extends Manager<CustomTemplates> {
   public __routers = observable.object<{
-    [routerName: string]: Record<
-      string,
-      RouterInstance<AllTemplates<CustomTemplates>>
-    >;
+    [routerName: string]: Record<string, RouterInstance<CustomTemplates>>;
   }>({});
 
   constructor(init: IManagerInit<CustomTemplates>) {
@@ -144,10 +140,7 @@ class MobxManager<
     >;
     runInAction(() => {
       this.__routers = observable.object<{
-        [routerName: string]: Record<
-          string,
-          RouterInstance<AllTemplates<CustomTemplates>>
-        >;
+        [routerName: string]: Record<string, RouterInstance<CustomTemplates>>;
       }>({});
     });
     this.initializeManager(initArgs);
@@ -166,12 +159,11 @@ class MobxManager<
     name,
     config,
     type,
-    parentName
-  }: IRouterCreationInfo<AllTemplates<CustomTemplates>, Name>): IRouterInitArgs<
-    AllTemplates<CustomTemplates>,
-    Name,
-    IManager<CustomTemplates>
-  > {
+    parentName,
+  }: IRouterCreationInfo<
+    CustomTemplates,
+    NarrowRouterTypeName<Name>
+  >): IRouterInitArgs<CustomTemplates, NarrowRouterTypeName<Name>> {
     const parent = this.routers[parentName];
 
     const actions = Object.keys(this.templates[type].actions);
@@ -184,15 +176,12 @@ class MobxManager<
       routers: {},
       manager: this as any,
       root: this.rootRouter,
-      actions: actions as any
+      actions: actions as any,
       // cache: this.routerCache as any // eslint-disable-line
     } as any;
   }
 
-  public registerRouter(
-    name: string,
-    router: RouterInstance<AllTemplates<CustomTemplates>>
-  ) {
+  public registerRouter(name: string, router: RouterInstance<CustomTemplates>) {
     runInAction(() => {
       extendObservable(this.__routers, { [name]: router });
     });
@@ -204,43 +193,36 @@ class MobxManager<
     // });
   }
 
-  get routers(): Record<string, RouterInstance<AllTemplates<CustomTemplates>>> {
+  get routers(): Record<string, RouterInstance<CustomTemplates>> {
     return this.__routers as any;
   }
 
   public createRouterFromInitArgs<
     Name extends NarrowRouterTypeName<keyof AllTemplates<CustomTemplates>>
   >(
-    initalArgs: IRouterInitArgs<
-      AllTemplates<CustomTemplates>,
-      NarrowRouterTypeName<Name>,
-      IManager<CustomTemplates>
-    >
-  ): RouterInstance<AllTemplates<CustomTemplates>, NarrowRouterTypeName<Name>> {
+    initalArgs: IRouterInitArgs<CustomTemplates, NarrowRouterTypeName<Name>>
+  ): RouterInstance<CustomTemplates, NarrowRouterTypeName<Name>> {
     const routerClass = this.routerTypes[initalArgs.type];
 
     const mobxRouter = new (routerClass as any)({
-      ...initalArgs
-    }) as RouterInstance<
-      AllTemplates<CustomTemplates>,
-      NarrowRouterTypeName<Name>
-    >;
+      ...initalArgs,
+    }) as RouterInstance<CustomTemplates, NarrowRouterTypeName<Name>>;
 
     runInAction(() => {
       // check if parent is visible
       if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
         const defaultAction = mobxRouter.config.defaultAction || [];
         set(((mobxRouter as unknown) as any).__state, {
-          visible: defaultAction.includes("show")
+          visible: defaultAction.includes("show" as never), // / TODO fix this nonsense
         });
         // check if root router
       } else if (mobxRouter.isRootRouter) {
         set(((mobxRouter as unknown) as any).__state, {
-          visible: true
+          visible: true,
         });
       } else {
         set(((mobxRouter as unknown) as any).__state, {
-          visible: false
+          visible: false,
         });
       }
     });
@@ -270,7 +252,7 @@ class MobxManager<
     const newState = this.calcNewRouterState(location, this.rootRouter as any);
     const routers = this.routers;
 
-    Object.values(routers).forEach(r => {
+    Object.values(routers).forEach((r) => {
       const routerSpecificState = newState[r.name];
 
       // Only update state if it is defined for this router
@@ -278,14 +260,14 @@ class MobxManager<
       if (routerSpecificState !== undefined) {
         let newHistory = [{ ...r.state }]
           .concat(r.history)
-          .filter(s => s !== undefined && s.visible !== undefined);
+          .filter((s) => s !== undefined && s.visible !== undefined);
         if (newHistory.length > 5) {
           newHistory = newHistory.slice(0, 5);
         }
         runInAction(() => {
           set(((r as unknown) as any).__state, {
             ...routerSpecificState,
-            ...r.EXPERIMENTAL_internal_state
+            ...r.EXPERIMENTAL_internal_state,
           });
           set(((r as unknown) as any).__history, newHistory);
         });
@@ -298,7 +280,7 @@ decorate(MobxManager, {
   // __routers: observable,
   routers: computed,
   setCacheFromLocation: action,
-  setNewRouterState: action
+  setNewRouterState: action,
 });
 
 export { MobxManager };
