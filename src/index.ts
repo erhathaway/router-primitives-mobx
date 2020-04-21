@@ -173,7 +173,7 @@ class MobxManager<
       config: { ...config },
       type,
       parent,
-      routers: {},
+      children: {},
       manager: this as any,
       root: this.rootRouter,
       actions: actions as any,

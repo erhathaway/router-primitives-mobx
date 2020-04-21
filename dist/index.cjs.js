@@ -161,7 +161,7 @@ var MobxManager = /** @class */ (function (_super) {
             config: __assign({}, config),
             type: type,
             parent: parent,
-            routers: {},
+            children: {},
             manager: this,
             root: this.rootRouter,
             actions: actions,
