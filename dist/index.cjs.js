@@ -53,7 +53,7 @@ mobx.decorate(routerPrimitives.RouterCache, {
     discardTransaction: mobx.action,
     removeCache: mobx.action,
     setCache: mobx.action,
-    setCacheFromSerialized: mobx.action
+    setCacheFromSerialized: mobx.action,
 });
 // class MobxRouterCache extends RouterCache {
 //   public __cacheStore: boolean | undefined = undefined;
@@ -73,14 +73,13 @@ mobx.decorate(routerPrimitives.Router, {
     routeKey: mobx.computed,
     serialize: mobx.action,
     // state: computed,
-    lastDefinedParentsDisableChildCacheState: mobx.computed
-    // _EXPERIMENTAL_internal_state: observable
+    lastDefinedParentsDisableChildCacheState: mobx.computed,
 });
 var MobxRouter = /** @class */ (function (_super) {
     __extends(MobxRouter, _super);
     function MobxRouter(init) {
         var _this = _super.call(this, init) || this;
-        _this.__state = mobx.observable.object({});
+        _this.__state = mobx.observable.object({ visible: false });
         _this.__history = mobx.observable.array([]);
         _this.__EXPERIMENTAL_internal_state = mobx.observable.object({});
         return _this;
@@ -122,17 +121,12 @@ mobx.decorate(MobxRouter, {
     __history: mobx.observable,
     history: mobx.computed,
     __EXPERIMENTAL_internal_state: mobx.observable,
-    EXPERIMENTAL_internal_state: mobx.computed
-    // show: action,
-    // hide: action
+    EXPERIMENTAL_internal_state: mobx.computed,
 });
 mobx.decorate(routerPrimitives.Manager, {
     // rootRouter: observable
     // routers: observable
-    calcNewRouterState: mobx.action
-    // setCacheAndHide: action
-    // setChildrenDefaults: action
-    // createActionWrapperFunction: action
+    calcNewRouterState: mobx.action,
 });
 var actionFnDecorator = function (fn) {
     return mobx.action(fn);
@@ -170,8 +164,7 @@ var MobxManager = /** @class */ (function (_super) {
             routers: {},
             manager: this,
             root: this.rootRouter,
-            actions: actions
-            // cache: this.routerCache as any // eslint-disable-line
+            actions: actions,
         };
     };
     MobxManager.prototype.registerRouter = function (name, router) {
@@ -188,7 +181,6 @@ var MobxManager = /** @class */ (function (_super) {
     };
     Object.defineProperty(MobxManager.prototype, "routers", {
         get: function () {
-            // console.log("getting routers");
             return this.__routers;
         },
         enumerable: true,
@@ -202,18 +194,18 @@ var MobxManager = /** @class */ (function (_super) {
             if (mobxRouter.parent && mobxRouter.parent.state.visible === true) {
                 var defaultAction = mobxRouter.config.defaultAction || [];
                 mobx.set(mobxRouter.__state, {
-                    visible: defaultAction.includes("show")
+                    visible: defaultAction.includes("show"),
                 });
                 // check if root router
             }
             else if (mobxRouter.isRootRouter) {
                 mobx.set(mobxRouter.__state, {
-                    visible: true
+                    visible: true,
                 });
             }
             else {
                 mobx.set(mobxRouter.__state, {
-                    visible: false
+                    visible: false,
                 });
             }
         });
@@ -231,7 +223,6 @@ var MobxManager = /** @class */ (function (_super) {
      * Here we map over each state and set it on its respective router
      */
     MobxManager.prototype.setNewRouterState = function (location) {
-        console.log("existing location search", location.search);
         this.setCacheFromLocation(location);
         if (this.removeCacheAfterRehydration &&
             location.search[this.cacheKey] !== undefined) {
@@ -251,7 +242,6 @@ var MobxManager = /** @class */ (function (_super) {
                     newHistory_1 = newHistory_1.slice(0, 5);
                 }
                 mobx.runInAction(function () {
-                    // console.log("setting new router state", r.name, routerSpecificState);
                     mobx.set(r.__state, __assign(__assign({}, routerSpecificState), r.EXPERIMENTAL_internal_state));
                     mobx.set(r.__history, newHistory_1);
                 });
@@ -264,7 +254,7 @@ mobx.decorate(MobxManager, {
     // __routers: observable,
     routers: mobx.computed,
     setCacheFromLocation: mobx.action,
-    setNewRouterState: mobx.action
+    setNewRouterState: mobx.action,
 });
 
 exports.MobxManager = MobxManager;

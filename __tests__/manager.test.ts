@@ -1,6 +1,6 @@
 import { MobxManager } from "../src/index";
 
-describe('Manager', () => {
+describe("Manager", () => {
   // describe('Can be initialized', () => {
   //   it('Has router state store related methods removed', () => {
   //     const manager = new MobxManager();
@@ -23,46 +23,53 @@ describe('Manager', () => {
   //   expect(mobxRouter.history).toBe('historyy');
   // });
 
-  const routerTree = {
-    name: 'WholesomeRouter',
+  const routerDeclaration = {
+    name: "WholesomeRouter",
     routers: {
-      stack: [{
-        name: 'SaneRouter',
-        routeKey: 'aKey',
-      }],
-      scene: [{
-        name: 'users'
-      }]
-    }
-  }
-  it('Manages history and state during state changes', () => {
-    const manager = new MobxManager({ routerTree });
+      stack: [
+        {
+          name: "SaneRouter",
+          routeKey: "aKey",
+        },
+      ],
+      scene: [
+        {
+          name: "users",
+        },
+      ],
+    },
+  };
+  it("Manages history and state during state changes", () => {
+    const manager = new MobxManager({ routerDeclaration });
     const firstLocation = {
-      pathname: ['users', '22'],
+      pathname: ["users", "22"],
       search: {
         aKey: 1,
-        anotherKey: true
+        anotherKey: true,
       },
-      options: {}
+      options: {},
     };
 
     const secondLocation = {
       pathname: [],
       search: {
         aKey: 1,
-        anotherKey: true
+        anotherKey: true,
       },
-      options: {}
+      options: {},
     };
 
-    manager.serializedStateStore.setState(firstLocation)
+    manager.serializedStateStore.setState(firstLocation);
 
-    expect(manager.routers['SaneRouter'].state).toEqual({ order: "1", visible: true });
-    expect(manager.routers['users'].state).toEqual({ visible: true });
+    expect(manager.routers["SaneRouter"].state).toEqual({
+      order: "1",
+      visible: true,
+    });
+    expect(manager.routers["users"].state).toEqual({ visible: true });
 
     manager.serializedStateStore.setState(secondLocation);
 
-    expect(manager.routers['users'].state).toEqual({ visible: false });
-    expect(manager.routers['users'].history).toEqual([{ visible: true }]);
-  })
-})
+    expect(manager.routers["users"].state).toEqual({ visible: false });
+    expect(manager.routers["users"].history).toEqual([{ visible: true }]);
+  });
+});
